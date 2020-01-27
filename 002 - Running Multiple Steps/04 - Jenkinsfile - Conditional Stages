@@ -1,9 +1,28 @@
 pipeline {
+	parameters { 
+		choice(name: 'STAGE_TO_BUILD', choices: ['build', 'test'], description: 'Which stage do you want to execute?') 
+	}
     agent { 
 		docker { 
 			image 'alpine:latest' 
 		}
 	}
     stages {
+        stage('build') {
+            when {
+                environment name: 'STAGE_TO_BUILD', value: 'build'
+            }
+            steps {
+            	echo "Executing build!"
+            }
+        }
+        stage('test') {
+            when {
+                environment name: 'STAGE_TO_BUILD', value: 'test'
+            }
+            steps {
+            	echo "Executing test!"
+            }
+        }
     }
 }

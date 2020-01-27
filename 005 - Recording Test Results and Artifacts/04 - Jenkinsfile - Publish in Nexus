@@ -1,13 +1,36 @@
 pipeline {
     agent { 
 		docker { 
-			image 'alpine:latest' 
+			image 'maven:3.3.3'
+			args '--network training-playground'
 		}
 	}
     stages {
-        stage('tests') {
+        stage('build') {
             steps {
-                sh ""
+				configFileProvider([configFile(fileId: "settings.xml", targetLocation: 'settings-copy.xml')]) {
+	                sh "mvn install \
+	                		-s settings-copy.xml \
+	                		-f '005 - Recording Test Results and Artifacts/Java Application'"
+    			}
+            }
+        }
+        stage('publish') {
+            steps {
+				configFileProvider([configFile(fileId: "settings.xml", targetLocation: 'settings-copy.xml')]) {
+	                sh "mvn deploy:deploy-file 																				\
+							-s settings-copy.xml 																			\
+							-Durl='http://nexus:8081/repository/maven-releases/' 											\
+							-DrepositoryId='maven-releases'						 											\
+							-Dfile='005 - Recording Test Results and Artifacts/Java Application/target/java-app-1.0.0.jar'  \
+							-Dpackaging=jar 																				\
+							-DgeneratePom=true 																				\
+							-DgeneratePom.description='Generated from training-playground' 									\
+							-DgroupId='training-playground' 																\
+							-DartifactId='training-playground-java-app'							 							\
+							-Dversion=1.0.0"
+
+    			}
             }
         }
     }
